@@ -1,0 +1,91 @@
+@page
+@model StudentManagement.Pages.FeeManagement.StudentFeeStatusModel
+@{
+    ViewData["Title"] = "Student Fee Status";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h4 class="fw-bold">Student Fee Status</h4>
+            <p class="text-muted">Track collection progress and manage outstanding balances.</p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <small class="text-muted text-uppercase">Total Expected</small>
+                    <div class="fs-3 fw-bold">$450,000</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <small class="text-muted text-uppercase">Total Collected</small>
+                    <div class="fs-3 fw-bold text-success">$385,250</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <small class="text-muted text-uppercase">Outstanding</small>
+                    <div class="fs-3 fw-bold text-warning">$64,750</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <small class="text-muted text-uppercase">Overdue Students</small>
+                    <div class="fs-3 fw-bold text-danger">24</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Students Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>STUDENT NAME</th>
+                            <th>EXPECTED FEES</th>
+                            <th>PAYMENTS MADE</th>
+                            <th>OUTSTANDING</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="fw-bold">John Doe</div>
+                                <small class="text-muted">ID: STU-2024-001</small>
+                            </td>
+                            <td>$5,000.00</td>
+                            <td class="text-success">$5,000.00</td>
+                            <td>$0.00</td>
+                            <td><span class="badge bg-success bg-opacity-10 text-success">PAID</span></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="fw-bold">Jane Smith</div>
+                                <small class="text-muted">ID: STU-2024-042</small>
+                            </td>
+                            <td>$5,000.00</td>
+                            <td>$2,500.00</td>
+                            <td class="text-warning fw-bold">$2,500.00</td>
+                            <td><span class="badge bg-warning bg-opacity-10 text-warning">PARTIAL</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

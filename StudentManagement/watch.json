@@ -1,0 +1,23 @@
+{
+  "watchFiles": [
+    "**/*.cs",
+    "**/*.cshtml",
+    "**/*.razor"
+  ],
+  "watchDirectories": [
+    "Pages",
+    "Models",
+    "Services",
+    "wwwroot/css",
+    "wwwroot/js"
+  ],
+  "exclude": [
+    "**/node_modules/**",
+    "**/.git/**",
+    "**/*.tmp",
+    "**/uploads/**",
+    "**/temp/**",
+    "bin/**/*",
+    "obj/**/*"
+  ]
+}

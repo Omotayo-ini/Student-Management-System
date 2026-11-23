@@ -1,0 +1,45 @@
+@page
+@model StudentManagement.Pages.Teachers.IndexModel
+@{
+    ViewData["Title"] = "Teachers";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between mb-3">
+        <h4 class="fw-bold">Teachers</h4>
+        <a asp-page="Create" class="btn btn-primary">+ Add Teacher</a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in Model.Teachers)
+                        {
+                        <tr>
+                            <td>@t.Name</td>
+                            <td>@t.ContactInfo?.Phone</td>
+                            <td>@t.ContactInfo?.Email</td>
+                            <td>
+                                <form method="post" asp-page-handler="Delete">
+                                    <input type="hidden" name="id" value="@t.Id" />
+                                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

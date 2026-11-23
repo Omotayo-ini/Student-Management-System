@@ -1,0 +1,152 @@
+@page "{id}"
+@model StudentManagement.Pages.StudentRecords.DetailsModel
+@{
+    ViewData["Title"] = "Student Details";
+}
+
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a asp-page="Index" class="text-decoration-none text-muted">Student Records</a></li>
+                <li class="breadcrumb-item active">Student Details</li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="fw-bold">@Model.Student.FullName</h4>
+                <p class="text-muted mb-0">ID: @Model.Student.StudentId</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a asp-page="Edit" asp-route-id="@Model.Student.Id" class="btn btn-primary">
+                    <i class="bi bi-pencil me-2"></i>Edit
+                </a>
+                <a asp-page="Index" class="btn btn-outline-secondary">Back to List</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column: Student Info -->
+        <div class="col-md-4">
+            <!-- Profile Card -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body text-center">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                         style="width: 100px; height: 100px;">
+                        <span class="display-4 text-primary">@Model.Student.FirstName[0]@Model.Student.LastName[0]</span>
+                    </div>
+                    <h5 class="fw-bold">@Model.Student.FullName</h5>
+                    <p class="text-muted mb-2">@Model.Student.ClassName</p>
+                    <span class="badge bg-@(Model.Student.Status == "active" ? "success" : "secondary") bg-opacity-10 text-@(Model.Student.Status == "active" ? "success" : "secondary") text-capitalize">
+                        @Model.Student.Status
+                    </span>
+                </div>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="fw-bold mb-0">Contact Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Phone</small>
+                        <span>@(string.IsNullOrEmpty(Model.Student.ContactPhone) ? "-" : Model.Student.ContactPhone)</span>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Email</small>
+                        <span>@(string.IsNullOrEmpty(Model.Student.ContactEmail) ? "-" : Model.Student.ContactEmail)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Academic Info -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="fw-bold mb-0">Academic Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Class</small>
+                        <span>@Model.Student.ClassName</span>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Class Teacher</small>
+                        <span>@(Model.TeacherName ?? "Not Assigned")</span>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Birthdate</small>
+                        <span>@Model.Student.BirthDate.ToDateTime().ToString("MMM dd, yyyy")</span>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block">Age</small>
+                        <span>@Model.Student.Age years</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Fee History -->
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0">Fee History</h6>
+                    <a asp-page="/Payments/Record" asp-route-studentId="@Model.Student.Id" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus me-1"></i>Record Payment
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (Model.FeeRecords.Any())
+                    {
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ACADEMIC YEAR</th>
+                                    <th>TERM</th>
+                                    <th>AMOUNT DUE</th>
+                                    <th>PAID</th>
+                                    <th>BALANCE</th>
+                                    <th>STATUS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var fee in Model.FeeRecords)
+                                    {
+                                <tr>
+                                    <td>@fee.AcademicYear</td>
+                                    <td>@fee.Term</td>
+                                    <td>@fee.AmountDue.ToString("C")</td>
+                                    <td class="text-success">@fee.AmountPaid.ToString("C")</td>
+                                    <td class="@(fee.Balance > 0 ? "text-danger fw-bold" : "")">@fee.Balance.ToString("C")</td>
+                                    <td>
+                                        @{
+                                                    var statusClass = fee.Status switch
+                                                    {
+                                                        "paid" => "bg-success bg-opacity-10 text-success",
+                                                        "partial" => "bg-warning bg-opacity-10 text-warning",
+                                                        "overdue" => "bg-danger bg-opacity-10 text-danger",
+                                                        _ => "bg-secondary bg-opacity-10 text-secondary"
+                                                    };
+                                        }
+                                        <span class="badge @statusClass text-uppercase">@fee.Status</span>
+                                    </td>
+                                </tr>
+                                    }
+                            </tbody>
+                        </table>
+                    </div>
+                    }
+                    else
+                    {
+                    <div class="text-center py-5">
+                        <i class="bi bi-cash-stack text-muted fs-1"></i>
+                        <p class="text-muted mt-3">No fee records found for this student.</p>
+                    </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

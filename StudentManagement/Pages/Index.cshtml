@@ -1,0 +1,204 @@
+@page
+@model StudentManagement.Pages.IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold">Dashboard</h4>
+            <p class="text-muted">Welcome to EduManager School Admin System</p>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row mb-4">
+        <!-- Fee Summary Cards -->
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h6>FEES COLLECTED</h6>
+                    <h3>@Model.TotalCollected.ToString("C")</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h6>OUTSTANDING</h6>
+                    <h3>@Model.TotalOutstanding.ToString("C")</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h6>COLLECTION RATE</h6>
+                    <h3>@Model.CollectionRate%</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h6>TOTAL STUDENTS</h6>
+                    <h3>@Model.TotalStudents</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Automation Status Panel -->
+    <div class="card mb-4">
+        <div class="card-header bg-dark text-white">
+            <i class="fas fa-robot"></i> Automation Status
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Grade Rollover</span>
+                        <span class="badge @(Model.GradeRolloverActive ? "bg-success" : "bg-secondary")">
+                            @(Model.GradeRolloverActive ? "Active" : "Paused")
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Age Updates</span>
+                        <span class="badge @(Model.AgeUpdateActive ? "bg-success" : "bg-secondary")">
+                            @(Model.AgeUpdateActive ? "Active" : "Paused")
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="d-flex">
+                        <form method="post" asp-page-handler="RunAutomation" class="me-2">
+                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-play-fill me-1"></i>Run Now
+                            </button>
+                        </form>
+                        <form method="post" asp-page-handler="ApplyTermFees">
+                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-calendar-check me-1"></i>Apply Term Fees
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prospectus Integration -->
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+            <i class="fas fa-book"></i> Prospectus Integration
+        </div>
+        <div class="card-body">
+            @if (Model.ProspectusLastSync != null)
+            {
+                <span class="badge bg-success">Synced</span>
+                <small>Last sync: @Model.ProspectusLastSync.Value.ToString("g")</small>
+            }
+            else
+            {
+                <span class="badge bg-warning">Not Synced</span>
+            }
+            <button class="btn btn-sm btn-outline-secondary ms-3" onclick="syncProspectus()">
+                Sync Now
+            </button>
+        </div>
+    </div>
+
+    <!-- Bulk Import Status -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <i class="fas fa-file-import"></i> Recent Imports
+        </div>
+        <div class="card-body">
+            @if (Model.LastImport != null)
+            {
+                <p>@Model.LastImport.FileName: @Model.LastImport.SuccessCount succeeded, @Model.LastImport.FailedCount failed</p>
+            }
+            <a asp-page="/DataImport/Index" class="btn btn-primary btn-sm">Import Students</a>
+        </div>
+    </div>
+
+    <!-- Quick Actions (existing) -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h6 class="fw-bold mb-0">Quick Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a asp-page="/StudentRecords/Create" class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3">
+                            <div class="bg-primary bg-opacity-10 rounded p-2">
+                                <i class="bi bi-person-plus text-primary"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">Add New Student</div>
+                                <small class="text-muted">Register a new student to the system</small>
+                            </div>
+                            <i class="bi bi-chevron-right ms-auto text-muted"></i>
+                        </a>
+                        <a asp-page="/StudentRecords/Index" class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3">
+                            <div class="bg-info bg-opacity-10 rounded p-2">
+                                <i class="bi bi-people text-info"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">View All Students</div>
+                                <small class="text-muted">Browse and manage student records</small>
+                            </div>
+                            <i class="bi bi-chevron-right ms-auto text-muted"></i>
+                        </a>
+                        <a asp-page="/FeeManagement/FeeStructure" class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3">
+                            <div class="bg-success bg-opacity-10 rounded p-2">
+                                <i class="bi bi-cash-coin text-success"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">Fee Structure</div>
+                                <small class="text-muted">Configure tuition and miscellaneous fees</small>
+                            </div>
+                            <i class="bi bi-chevron-right ms-auto text-muted"></i>
+                        </a>
+                        <a asp-page="/DataImport/Index" class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3">
+                            <div class="bg-warning bg-opacity-10 rounded p-2">
+                                <i class="bi bi-upload text-warning"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">Import Data</div>
+                                <small class="text-muted">Bulk import students from Excel/CSV</small>
+                            </div>
+                            <i class="bi bi-chevron-right ms-auto text-muted"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0">Recent Activity</h6>
+                    <a href="#" class="text-decoration-none small">View All</a>
+                </div>
+                <div class="card-body">
+                    

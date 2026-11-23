@@ -1,0 +1,26 @@
+@page
+@model StudentManagement.Pages.Grades.CreateModel
+@{
+    ViewData["Title"] = "Add Grade";
+}
+
+<div class="container-fluid py-4">
+    <h4 class="fw-bold mb-4">Add New Grade</h4>
+    <form method="post" class="needs-validation" novalidate>
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label class="form-label">Grade Name *</label>
+                        <input asp-for="GradeName" class="form-control" required />
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <a asp-page="/StudentRecords/Index" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Add Grade</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

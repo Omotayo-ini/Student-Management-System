@@ -1,0 +1,113 @@
+@page
+@model StudentManagement.Pages.Automation.RolloverModel
+@{
+    ViewData["Title"] = Model.IsPreview ? "Rollover Preview" : "Execute Rollover";
+}
+
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a asp-page="Index" class="text-decoration-none text-muted">Automation</a></li>
+                <li class="breadcrumb-item active">@(Model.IsPreview ? "Preview" : "Execute")</li>
+            </ol>
+        </nav>
+        <h4 class="fw-bold">Grade Rollover — @Model.AcademicYear</h4>
+    </div>
+
+    @if (Model.Preview != null)
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong>@Model.Preview.WillRollover</strong> of <strong>@Model.Preview.TotalStudents</strong> students will be rolled over.
+            <strong>@Model.Preview.WillSkip</strong> will be skipped.
+            <div class="mt-2">This operation changes grade and class placement only. Existing balances and payments are preserved; term fees are applied separately.</div>
+        </div>
+
+        <form method="post">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th><input type="checkbox" class="form-check-input" id="selectAll" checked /></th>
+                                    <th>Student</th>
+                                    <th>Current Grade</th>
+                                    <th>Proposed Grade</th>
+                                    <th>Action</th>
+                                    <th>Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var change in Model.Preview.Changes)
+                                {
+                                    var isRollover = change.Action == RolloverAction.RollOver;
+                                    <tr class="@(isRollover ? "" : "table-secondary")">
+                                        <td>
+                                            @if (isRollover)
+                                            {
+                                                <input type="checkbox" class="form-check-input student-check" name="SelectedStudentIds" value="@change.StudentId" checked />
+                                            }
+                                        </td>
+                                        <td>@change.StudentName</td>
+                                        <td>@change.CurrentGrade</td>
+                                        <td>
+                                            @if (change.Action == RolloverAction.Warning)
+                                            {
+                                                <span class="text-warning">@change.ProposedGrade</span>
+                                            }
+                                            else
+                                            {
+                                                @change.ProposedGrade
+                                            }
+                                        </td>
+                                        <td>
+                                            @switch (change.Action)
+                                            {
+                                                case RolloverAction.RollOver:
+                                                    <span class="badge bg-primary">Roll Over</span>
+                                                    break;
+                                                case RolloverAction.Skip:
+                                                    <span class="badge bg-secondary">Skip</span>
+                                                    break;
+                                                case RolloverAction.Warning:
+                                                    <span class="badge bg-warning text-dark">Warning</span>
+                                                    break;
+                                            }
+                                        </td>
+                                        <td><small class="text-muted">@change.Reason</small></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <a asp-page="Index" class="btn btn-outline-secondary">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-arrow-up-circle me-2"></i>Execute Rollover
+                </button>
+            </div>
+        </form>
+    }
+
+    @if (Model.Result != null)
+    {
+        <div class="alert @(Model.Result.FailedCount == 0 ? "alert-success" : "alert-warning")">
+            <i class="bi @(Model.Result.FailedCount == 0 ? "bi-check-circle" : "bi-exclamation-triangle") me-2"></i>
+            Rollover completed: <strong>@Model.Result.SuccessCount</strong> succeeded, <strong>@Model.Result.FailedCount</strong> failed.
+        </div>
+        <a asp-page="Index" class="btn btn-primary">Back to Automation</a>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('selectAll')?.addEventListener('change', function() {
+            document.querySelectorAll('.student-check').forEach(cb => cb.checked = this.checked);
+        });
+    </script>
+}

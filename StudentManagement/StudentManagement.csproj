@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- Firebase -->
+		<PackageReference Include="Google.Cloud.Firestore" Version="3.4.0" />
+		<PackageReference Include="FirebaseAdmin" Version="3.4.0" />
+
+		<!-- Excel Import -->
+		<PackageReference Include="EPPlus" Version="7.0.0" />
+		<PackageReference Include="PdfPig" Version="0.1.14" />
+
+		<!-- PDF Processing - use this specific version -->
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Remove="wwwroot\uploads\**" />
+		<None Remove="wwwroot\uploads\**" />
+	</ItemGroup>
+
+</Project>

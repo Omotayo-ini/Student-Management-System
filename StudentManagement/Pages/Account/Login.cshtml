@@ -1,0 +1,78 @@
+@page
+@model StudentManagement.Pages.Account.LoginModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Sign In";
+}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign In - EduManager</title>
+    <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="login-background" aria-hidden="true">
+        <div class="login-blob login-blob-one"></div>
+        <div class="login-blob login-blob-two"></div>
+        <div class="login-blob login-blob-three"></div>
+    </div>
+
+    <main class="login-stage">
+        <section class="login-card" id="login-card" aria-live="polite">
+            <div class="login-panel login-form-panel" id="login-form-panel">
+                <div class="login-logo" aria-hidden="true">EM</div>
+                <h1>Welcome Back</h1>
+                <p class="login-subtitle">Sign in to continue to EduManager.</p>
+
+                <form id="firebase-login-form" novalidate>
+                    <div class="login-field">
+                        <label for="login-email">Email</label>
+                        <input id="login-email" type="email" autocomplete="email" placeholder="you@example.com" required />
+                    </div>
+                    <div class="login-field">
+                        <label for="login-password">Password</label>
+                        <div class="login-password-wrap">
+                            <input id="login-password" type="password" autocomplete="current-password" placeholder="Enter your password" required />
+                            <button id="login-password-toggle" type="button">Show</button>
+                        </div>
+                    </div>
+                    <label class="login-remember">
+                        <input id="login-remember" type="checkbox" />
+                        <span>Remember me</span>
+                    </label>
+                    <p id="login-error" class="login-error" role="alert"></p>
+                    <button id="login-submit" class="login-submit" type="submit">Sign In</button>
+                </form>
+            </div>
+
+            <div class="login-panel login-verification-panel" id="login-verification-panel" aria-hidden="true">
+                <div class="login-success-visual" aria-hidden="true">
+                    <div class="login-orb-ring login-orb-ring-one"></div>
+                    <div class="login-orb-ring login-orb-ring-two"></div>
+                    <div class="login-orb-pulse"></div>
+                    <div class="login-shield">
+                        <svg viewBox="0 0 64 64" role="img">
+                            <path class="login-shield-shape" d="M32 5 53 13v16c0 14-8.8 25.2-21 30C19.8 54.2 11 43 11 29V13L32 5Z" />
+                            <path class="login-checkmark" d="m21 32 7 7 15-16" />
+                        </svg>
+                    </div>
+                    <div id="login-success-particles" class="login-success-particles"></div>
+                </div>
+                <h2 id="login-verification-title">Verifying credentials</h2>
+                <p id="login-verification-message">Securing your EduManager session...</p>
+            </div>
+        </section>
+    </main>
+
+    <div id="login-transition" class="login-transition" aria-hidden="true"></div>
+
+    <script>
+        window.eduManagerFirebaseConfig = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.Firebase,
+            new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+    </script>
+    <script type="module" src="~/js/firebase-login.js" asp-append-version="true"></script>
+</body>
+</html>

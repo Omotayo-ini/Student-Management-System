@@ -1,0 +1,153 @@
+@page
+@model StudentManagement.Pages.FeeManagement.FeeStructureModel
+@{
+    ViewData["Title"] = "Fee Structure";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h4 class="fw-bold">Fee Structure</h4>
+            <p class="text-muted">Oakdale International School - Tuition and Fees (@Model.CurrentAcademicYear)</p>
+        </div>
+        <a asp-page="/Prospectus/Index" class="btn btn-primary">
+            <i class="bi bi-file-earmark-pdf me-2"></i>Upload Prospectus
+        </a>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <ul class="nav nav-tabs mb-3">
+        @foreach (var term in Model.Terms)
+        {
+            <li class="nav-item">
+                <a class="nav-link @(term.IsCurrent ? "active" : "")"
+                   asp-route-term="@term.Name" asp-route-year="@term.AcademicYear">
+                    @term.Name
+                </a>
+            </li>
+        }
+    </ul>
+
+    <!-- Fee Table -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0"><i class="bi bi-table me-2"></i>Class Fee Breakdown (Rands)</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>CLASS</th>
+                            <th>REGISTRATION</th>
+                            <th>BOOKS & AIDS</th>
+                            <th>TERM 1<br /><small class="text-muted">(Aug-Nov)</small></th>
+                            <th>TERM 2<br /><small class="text-muted">(Nov-Mar)</small></th>
+                            <th>TERM 3<br /><small class="text-muted">(Mar-Jun)</small></th>
+                            <th>Auto-Adjust</th>
+                            <th>TOTAL/YEAR</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var fee in Model.GradeFeeStructures)
+                        {
+                            <tr>
+                                <form method="post" asp-page-handler="UpdateFee">
+                                    <input type="hidden" name="id" value="@fee.Id" />
+                                    <input type="hidden" name="academicYear" value="@fee.AcademicYear" />
+                                    <input type="hidden" name="gradeLevel" value="@fee.GradeLevel" />
+                                    <input type="hidden" name="className" value="@fee.ClassName" />
+
+                                    <td class="fw-bold">@fee.ClassName</td>
+                                    <td>
+                                        <input type="number" name="registrationFee" value="@fee.RegistrationFee"
+                                               class="form-control form-control-sm" style="width: 90px;" step="0.01" />
+                                    </td>
+                                    <td>
+                                        <input type="number" name="booksAndAids" value="@fee.BooksAndAids"
+                                               class="form-control form-control-sm" style="width: 90px;" step="0.01" />
+                                    </td>
+                                    <td>
+                                        <input type="number" name="term1Fee" value="@fee.Term1Fee"
+                                               class="form-control form-control-sm" style="width: 90px;" step="0.01" />
+                                    </td>
+                                    <td>
+                                        <input type="number" name="term2Fee" value="@fee.Term2Fee"
+                                               class="form-control form-control-sm" style="width: 90px;" step="0.01" />
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <input type="number" name="term3Fee" value="@fee.Term3Fee"
+                                                   class="form-control form-control-sm" style="width: 90px;" step="0.01" />
+                                            @if (fee.IncludesFuel)
+                                            {
+                                                <span class="badge bg-success bg-opacity-10 text-success ms-1" style="font-size: 0.6rem;">FUEL</span>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="form-check form-switch">
+                                            <input type="checkbox" name="autoAdjustOnRollover" value="true"
+                                                   class="form-check-input" @(fee.AutoAdjustOnRollover ? "checked" : "") />
+                                            <input type="hidden" name="autoAdjustOnRollover" value="false" />
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="fw-bold text-primary">R @fee.TotalPerYear</span>
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                <i class="bi bi-check-lg"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </form>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Info -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-bank me-2"></i>Bank Details</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><strong>Bank:</strong> Nedbank</li>
+                        <li class="mb-2"><strong>Account:</strong> 12990491079</li>
+                        <li class="mb-2"><strong>Branch:</strong> Pioneer Branch</li>
+                        <li class="mb-2"><strong>Merchant Till:</strong> 14020</li>
+                        <li class="mb-2"><strong>Mpesa:</strong> 58410820 / 57072794</li>
+                        <li><strong>Eco-cash:</strong> 68961714</li>
+                    </ul>
+                    <div class="alert alert-warning mt-3 mb-0 py-2">
+                        <small><i class="bi bi-exclamation-triangle me-1"></i> PLUS M30.00 Bank charges</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h6 class="fw-bold mb-0"><i class="bi bi-info-circle me-2"></i>Important Notes

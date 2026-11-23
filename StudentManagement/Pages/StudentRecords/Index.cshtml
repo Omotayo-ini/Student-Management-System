@@ -1,0 +1,401 @@
+@page
+@model StudentManagement.Pages.StudentRecords.IndexModel
+@{
+    ViewData["Title"] = "Student Records";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item active">Student Records</li>
+                </ol>
+            </nav>
+            <h4 class="fw-bold">Student Records</h4>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-page="/Teachers/Create" class="btn btn-primary">
+                <i class="bi bi-plus me-2"></i>+ Add New Teacher
+            </a>
+            <a asp-page="/Grades/Create" class="btn btn-outline-secondary">
+                <i class="bi bi-bookmark-plus me-2"></i>+ Add Grade
+            </a>
+        </div>
+    </div>
+
+    <section class="particle-hero" aria-hidden="true">
+        <div id="particle-sphere"></div>
+    </section>
+
+    <div class="d-flex justify-content-between mb-3">
+        <h2>Student Records</h2>
+        <div>
+            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#importModal">
+                <i class="fas fa-file-import"></i> Bulk Import
+            </button>
+            <a asp-page="Create" class="btn btn-primary">Add Student</a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0"
+                               placeholder="Search by name..."
+                               asp-for="SearchTerm"
+                               onkeydown="if(event.key==='Enter'){this.form.submit();}">
+                        @if (!string.IsNullOrEmpty(Model.SearchTerm))
+                        {
+                            <a asp-page="./Index" asp-route-gradeFilter="@Model.GradeFilter" asp-route-statusFilter="@Model.StatusFilter" class="btn btn-outline-secondary">
+                                <i class="bi bi-x"></i>
+                            </a>
+                        }
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <select asp-for="GradeFilter" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Grades</option>
+                        @foreach (var grade in Model.AvailableGrades)
+                        {
+                            <option value="@grade" selected="@(Model.GradeFilter == grade ? "selected" : null)">@grade</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <input type="number" asp-for="AgeMin" class="form-control" placeholder="Min" onchange="this.form.submit()" />
+                </div>
+                <div class="col-md-1">
+                    <input type="number" asp-for="AgeMax" class="form-control" placeholder="Max" onchange="this.form.submit()" />
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" asp-for="StatusFilter" onchange="this.form.submit()">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="graduated">Graduated</option>
+                        <option value="all">All Status</option>
+                    </select>
+                </div>
+                <div class="col-md-1 text-end">
+                    <button type="submit" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-funnel me-2"></i>Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Students Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Grade</th>
+                            <th>Age</th>
+                            <th>Class Teacher</th>
+                            <th>Guardian</th>
+                            <th>Fee Status</th>
+                            <th>Balance</th>
+                            <th>Automation</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var student in Model.Students)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center"
+                                             style="width: 40px; height: 40px;">
+                                            <span class="fw-bold text-muted">@student.FirstName[0]@student.LastName[0]</span>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">@student.FullName</div>
+                                            <small class="text-muted">ID: @student.StudentId</small>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    @{
+                                        var gradeBadgeClass = student.GradeLevel switch
+                                        {
+                                            "P" => "grade-primary",
+                                            "M" => "grade-middle",
+                                            "S" => "grade-senior",
+                                            _ => "grade-primary"
+                                        };
+                                    }
+                                    <span class="grade-badge @gradeBadgeClass">@student.GradeLevel</span>
+                                    @student.Grade
+                                </td>
+
+                                <td>@student.Age years</td>
+
+                                <td>
+                                    <span>@(string.IsNullOrEmpty(student.ClassTeacherName) ? "Not Assigned" : student.ClassTeacherName)</span>
+                                </td>
+
+                                <td>
+                                    <div>@student.ContactPhone</div>
+                                    <small class="text-muted">@student.ParentId</small>
+                                </td>
+
+                                <td>
+                                    @if (student.PaymentStatus == "Paid")
+                                    {
+                                        <span class="badge bg-success">Paid</span>
+                                    }
+                                    else if (student.PaymentStatus == "Partial")
+                                    {
+                                        <span class="badge bg-warning">Partial</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">Outstanding</span>
+                                    }
+                                </td>
+
+                                <td>
+                                    <form method="post" asp-page-handler="UpdateBalance" class="d-flex align-items-center gap-2 balance-form" style="display:none;">
+                                        <input type="hidden" name="id" value="@student.Id" />
+                                        <input type="hidden" name="gradeFilter" value="@Model.GradeFilter" />
+                                        <input type="hidden" name="statusFilter" value="@Model.StatusFilter" />
+                                        <input type="hidden" name="searchTerm" value="@Model.SearchTerm" />
+                                        <input type="hidden" name="ageMin" value="@(Model.AgeMin?.ToString() ?? "")" />
+                                        <input type="hidden" name="ageMax" value="@(Model.AgeMax?.ToString() ?? "")" />
+                                        <input type="hidden" name="currentPage" value="@Model.CurrentPage" />
+                                        <input type="number" name="newBalance" value="@student.CurrentBalance" step="0.01" class="form-control form-control-sm" style="width: 100px;" />
+                                        <button type="submit" class="btn btn-sm btn-success" title="Save"><i class="bi bi-check"></i></button>
+                                        <button type="button" class="btn btn-sm btn-secondary" onclick="cancelEditBalance(this)" title="Cancel"><i class="bi bi-x"></i></button>
+                                    </form>
+                                    <span class="balance-display" onclick="editBalance(this)" style="cursor: pointer;">
+                                        @student.CurrentBalance.ToString("C")
+                                        <i class="bi bi-pencil-square ms-1 text-muted" style="font-size: 0.75rem;"></i>
+                                    </span>
+                                    <div class="mt-1">
+                                        @if (Model.StudentCredits.ContainsKey(student.Id) && Model.StudentCredits[student.Id] > 0)
+                                        {
+                                            <span class="badge bg-success bg-opacity-10 text-success" style="font-size: 0.75rem;">
+                                                <i class="bi bi-wallet2 me-1"></i>Credit: @Model.StudentCredits[student.Id].ToString("C")
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted">Credit: R 0.00</small>
+                                        }
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <button class="btn btn-sm @(student.AutoGradeRolloverEnabled ? "btn-success" : "btn-secondary")" 
+                                            onclick="toggleGradeRollover('@student.Id')">
+                                        <i class="fas fa-sync"></i>
+                                    </button>
+                                    <button class="btn btn-sm @(student.AutoAgeUpdateEnabled ? "btn-success" : "btn-secondary")"
+                                            onclick="toggleAgeUpdate('@student.Id')">
+                                        <i class="fas fa-birthday-cake"></i>
+                                    </button>
+                                </td>
+
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <a asp-page="Edit" asp-route-id="@student.Id" class="btn btn-sm btn-outline-primary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a asp-page="Details" asp-route-id="@student.Id" class="btn btn-sm btn-outline-info" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                onclick="confirmDelete('@student.Id', '@student.FullName')" title="Delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (!Model.Students.Any())
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-people text-muted fs-1"></i>
+                    <p class="text-muted mt-3">No students found matching your criteria.</p>
+                    <a asp-page="Create" class="btn btn-primary">Add Your First Student</a>
+                </div>
+            }
+
+            <!-- Pagination -->
+            @if (Model.TotalPages > 1)
+            {
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <small class="text-muted">Showing @Model.StartRecord - @Model.EndRecord of @Model.TotalRecords students</small>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                <a class="page-link" asp-page="./Index"
+                                   asp-route-currentPage="@(Model.CurrentPage - 1)"
+                                   asp-route-searchTerm="@Model.SearchTerm"
+                                   asp-route-gradeFilter="@Model.GradeFilter"
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-ageMin="@Model.AgeMin"
+                                   asp-route-ageMax="@Model.AgeMax">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                            @for (int i = 1; i <= Model.TotalPages; i++)
+                            {
+                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                    <a class="page-link" asp-page="./Index"
+                                       asp-route-currentPage="@i"
+                                       asp-route-searchTerm="@Model.SearchTerm"
+                                       asp-route-gradeFilter="@Model.GradeFilter"
+                                       asp-route-statusFilter="@Model.StatusFilter"
+                                       asp-route-ageMin="@Model.AgeMin"
+                                       asp-route-ageMax="@Model.AgeMax">@i</a>
+                                </li>
+                            }
+                            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                                <a class="page-link" asp-page="./Index"
+                                   asp-route-currentPage="@(Model.CurrentPage + 1)"
+                                   asp-route-searchTerm="@Model.SearchTerm"
+                                   asp-route-gradeFilter="@Model.GradeFilter"
+                                   asp-route-statusFilter="@Model.StatusFilter"
+                                   asp-route-ageMin="@Model.AgeMin"
+                                   asp-route-ageMax="@Model.AgeMax">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>Bulk Import Students</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" enctype="multipart/form-data" asp-page-handler="Import">
+                <div class="modal-body">
+                    <input type="file" name="importFile" class="form-control" accept=".xlsx,.csv" required>
+                    <small class="text-muted">Columns: FirstName, LastName, Grade, Age, BirthMonth, GuardianName, GuardianPhone</small>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Import</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete <strong id="deleteStudentName"></strong>?
+                <p class="text-muted mt-2">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" asp-page-handler="Delete" id="deleteForm">
+                    <input type="hidden" name="id" id="deleteStudentId" />
+                    <input type="hidden" name="gradeFilter" id="deleteGradeFilter" value="@Model.GradeFilter" />
+                    <input type="hidden" name="statusFilter" id="deleteStatusFilter" value="@Model.StatusFilter" />
+                    <input type="hidden" name="searchTerm" id="deleteSearchTerm" value="@Model.SearchTerm" />
+                    <input type="hidden" name="ageMin" id="deleteAgeMin" value="@(Model.AgeMin?.ToString() ?? "")" />
+                    <input type="hidden" name="ageMax" id="deleteAgeMax" value="@(Model.AgeMax?.ToString() ?? "")" />
+                    <input type="hidden" name="currentPage" id="deleteCurrentPage" value="@Model.CurrentPage" />
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function confirmDelete(id, name) {
+            document.getElementById('deleteStudentId').value = id;
+            document.getElementById('deleteStudentName').textContent = name;
+
+            // Preserve current filter/query parameters into the delete form
+            var params = new URLSearchParams(window.location.search);
+            document.getElementById('deleteGradeFilter').value = params.get('gradeFilter') || '';
+            document.getElementById('deleteStatusFilter').value = params.get('statusFilter') || '';
+            document.getElementById('deleteSearchTerm').value = params.get('searchTerm') || '';
+            document.getElementById('deleteAgeMin').value = params.get('ageMin') || '';
+            document.getElementById('deleteAgeMax').value = params.get('ageMax') || '';
+            document.getElementById('deleteCurrentPage').value = params.get('currentPage') || '';
+
+            var modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+
+        function toggleGradeRollover(id) {
+            fetch('?handler=ToggleGradeRollover&id=' + encodeURIComponent(id), { method: 'POST' })
+                .then(response => {
+                    if (response.ok) {
+                        // Reload preserving query string
+                        window.location.href = window.location.href;
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+
+        function toggleAgeUpdate(id) {
+            fetch('?handler=ToggleAgeUpdate&id=' + encodeURIComponent(id), { method: 'POST' })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = window.location.href;
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+
+        function editBalance(displayElement) {
+            const td = displayElement.closest('td');
+            const form = td.querySelector('.balance-form');
+            const display = td.querySelector('.balance-display');
+            form.style.display = 'flex';
+            display.style.display = 'none';
+            const input = form.querySelector('input[name="newBalance"]');
+            input.focus();
+            input.select();
+        }
+
+        function cancelEditBalance(button) {
+            const td = button.closest('td');
+            const form = td.querySelector('.balance-form');
+            const display = td.querySelector('.balance-display');
+            form.style.display = 'none';
+            display.style.display = 'inline';
+        }
+    </script>
+    <script type="module" src="~/js/particle-sphere.js" asp-append-version="true"></script>
+}

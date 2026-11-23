@@ -1,0 +1,41 @@
+@page
+@model StudentManagement.Pages.Grades.IndexModel
+@{
+    ViewData["Title"] = "Grades";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between mb-3">
+        <h4 class="fw-bold">Grades</h4>
+        <a asp-page="Create" class="btn btn-primary">+ Add Grade</a>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Grade</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var g in Model.Grades)
+                        {
+                        <tr>
+                            <td>@g</td>
+                            <td>
+                                <form method="post" asp-page-handler="Delete">
+                                    <input type="hidden" name="grade" value="@g" />
+                                    <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,71 @@
+@page
+@model StudentManagement.Pages.Automation.AgeVerificationModel
+@{
+    ViewData["Title"] = "Age Update Management";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="#" class="text-decoration-none text-muted">Automation</a></li>
+                    <li class="breadcrumb-item active">Age Verification</li>
+                </ol>
+            </nav>
+            <h4 class="fw-bold">Age Update Management</h4>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-start gap-4">
+                <div class="bg-primary bg-opacity-10 rounded p-3">
+                    <i class="bi bi-calendar-check text-primary fs-2"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <h5 class="fw-bold mb-2">Pending Age Updates</h5>
+                    <p class="text-muted mb-3">
+                        <strong>@Model.TotalPending students</strong> have birthdays this month.
+                    </p>
+                    <form method="post" asp-page-handler="BulkUpdate">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Bulk Update Ages
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+            <h6 class="fw-bold mb-0">Pending Student List</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>STUDENT NAME</th>
+                            <th>BIRTHDATE</th>
+                            <th>CURRENT AGE</th>
+                            <th>NEW AGE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.PendingUpdates)
+                        {
+                        <tr>
+                            <td>@item.FullName</td>
+                            <td>@item.BirthDate.ToString("MMM dd, yyyy")</td>
+                            <td>@item.CurrentAge</td>
+                            <td><span class="badge bg-success bg-opacity-10 text-success">@item.NewAge</span></td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

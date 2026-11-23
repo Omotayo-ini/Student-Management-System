@@ -1,0 +1,133 @@
+@page
+@model StudentManagement.Pages.ClassLists.UploadModel
+@{
+    ViewData["Title"] = "Upload Class List";
+}
+
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a asp-page="/Automation/Index" class="text-decoration-none text-muted">Automation</a></li>
+                <li class="breadcrumb-item active">Class List Upload</li>
+            </ol>
+        </nav>
+        <h4 class="fw-bold">Upload Class List</h4>
+        <p class="text-muted">Upload the class lists prepared for the current year. The uploaded list becomes the current grade, class/section, and teacher assignment for matching students. Teachers are not permanently attached to grades.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label class="form-label">Class List File (.xlsx)</label>
+                            <input asp-for="UploadFile" type="file" class="form-control" accept=".xlsx" required />
+                            <small class="text-muted">
+                             The importer detects headers such as First Name, Surname, Birthdate, Grade, Class/Section, and Class Teacher. The previous fixed-column format is also supported.
+                            </small>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                             <strong>Recommended order:</strong> run the annual promotion first, then upload each new class list.
+                             The system matches students by name and uses birthdate to disambiguate duplicates. It updates placement only; balances, fees, and payments are never changed.
+                             Students not found and teachers not recognized are reported for review.
+                        </div>
+
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-upload me-2"></i>Process Class List
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Result != null)
+    {
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white">
+                        <h6 class="fw-bold mb-0">Results</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center mb-3">
+                            <div class="col-4">
+                                <div class="fs-3 fw-bold text-success">@Model.Result.Updated.Count</div>
+                                <small class="text-muted">Updated</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fs-3 fw-bold text-secondary">@Model.Result.Unchanged.Count</div>
+                                <small class="text-muted">Unchanged</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="fs-3 fw-bold text-warning">@Model.Result.NotFound.Count</div>
+                                <small class="text-muted">Not Found</small>
+                            </div>
+                        </div>
+
+                        @if (Model.Result.Updated.Any())
+                        {
+                            <h6 class="mt-3">Updated Students</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Student</th>
+                                            <th>Grade Change</th>
+                                            <th>Teacher Change</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var u in Model.Result.Updated)
+                                        {
+                                            <tr>
+                                                <td>@u.StudentName</td>
+                                                <td>
+                                                    @if (u.GradeChanged)
+                                                    {
+                                                        <span class="text-primary">@u.OldGrade → @u.NewGrade</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">No change</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (u.TeacherChanged)
+                                                    {
+                                                        <span class="text-primary">@u.OldTeacher → @u.NewTeacher</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">No change</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+
+                        @if (Model.Result.Errors.Any())
+                        {
+                            <div class="alert alert-warning mt-3">
+                                <h6>Errors</h6>
+                                <ul class="mb-0">
+                                    @foreach (var error in Model.Result.Errors)
+                                    {
+                                        <li>@error</li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

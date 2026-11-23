@@ -1,0 +1,15 @@
+@page
+@model StudentManagement.Pages.ErrorModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<div class="container py-5">
+    <h1 class="text-danger">Error</h1>
+    <h4>An error occurred while processing your request.</h4>
+
+    @if (Model.ShowRequestId)
+    {
+        <p><strong>Request ID:</strong> <code>@Model.RequestId</code></p>
+    }
+</div>

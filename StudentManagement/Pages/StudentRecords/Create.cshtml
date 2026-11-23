@@ -1,0 +1,159 @@
+@page
+@model StudentManagement.Pages.StudentRecords.CreateModel
+@{
+    ViewData["Title"] = "Add New Student";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a asp-page="Index" class="text-decoration-none text-muted">Student Records</a></li>
+                <li class="breadcrumb-item active">Add New Student</li>
+            </ol>
+        </nav>
+        <h4 class="fw-bold">Add New Student</h4>
+        <p class="text-muted">Enter personal and academic details to create a new student record.</p>
+    </div>
+
+    <form method="post" class="needs-validation" novalidate>
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+        <!-- Personal Info Section -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h6 class="fw-bold mb-0"><i class="bi bi-person me-2"></i>Personal Info</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Student.FirstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                        <input asp-for="Student.FirstName" class="form-control" placeholder="e.g. John" />
+                        <span asp-validation-for="Student.FirstName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Student.LastName" class="form-label">Surname <span class="text-danger">*</span></label>
+                        <input asp-for="Student.LastName" class="form-control" placeholder="e.g. Smith" />
+                        <span asp-validation-for="Student.LastName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="BirthDateInput" class="form-label">Birthdate</label>
+                        <input asp-for="BirthDateInput" type="date" class="form-control"
+                               max="@DateTime.Now.ToString("yyyy-MM-dd")"
+                               onchange="calculateAge(this.value)" />
+                        <span asp-validation-for="BirthDateInput" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Student.Age" class="form-label">Age (Calculated)</label>
+                        <input asp-for="Student.Age" class="form-control bg-light" readonly id="ageDisplay" />
+                        <small class="text-muted">Automatically calculated based on birthdate</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Info Section -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h6 class="fw-bold mb-0"><i class="bi bi-telephone me-2"></i>Contact Info</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Student.ContactPhone" class="form-label">Phone Number</label>
+                        <input asp-for="Student.ContactPhone" class="form-control" placeholder="+1 (555) 000-0000" />
+                        <span asp-validation-for="Student.ContactPhone" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Student.ContactEmail" class="form-label">Email Address</label>
+                        <input asp-for="Student.ContactEmail" type="email" class="form-control" placeholder="john.smith@example.com" />
+                        <span asp-validation-for="Student.ContactEmail" class="text-danger small"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- School Info Section -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h6 class="fw-bold mb-0"><i class="bi bi-mortarboard me-2"></i>School Info</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <!-- Grade Level removed as requested -->
+                    <div class="col-md-6">
+                        <label asp-for="Student.Grade" class="form-label">Grade</label>
+                        <select asp-for="Student.Grade" class="form-select" id="gradeSelect">
+                            <option value="">Select Grade...</option>
+                            @foreach (var grade in Model.AvailableGrades)
+                            {
+                                <option value="@grade">@grade</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Student.ClassTeacherId" class="form-label">Class Teacher</label>
+                        <select asp-for="Student.ClassTeacherId" class="form-select">
+                            <option value="">Select Teacher</option>
+                            @foreach (var teacher in Model.AvailableTeachers)
+                            {
+                                <option value="@teacher.Id">@teacher.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex justify-content-end gap-3">
+            <a asp-page="Index" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-2"></i>Save Record
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+    function calculateAge(birthDate) {
+            if (!birthDate) return;
+
+            const today = new Date();
+            const birth = new Date(birthDate);
+            let age = today.getFullYear() - birth.getFullYear();
+            const monthDiff = today.getMonth() - birth.getMonth();
+
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+
+            document.getElementById('ageDisplay').value = age;
+        }
+
+        function updateGradeOptions(level) {
+            const gradeSelect = document.getElementById('gradeSelect');
+            gradeSelect.innerHTML = '<option value="">Select Grade...</option>';
+
+            let grades = [];
+            if (level === 'P') grades = ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'];
+            else if (level === 'M') grades = ['Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'];
+            else if (level === 'S') grades = ['Grade 11', 'Grade 12'];
+
+            grades.forEach(grade => {
+                const option = document.createElement('option');
+                option.value = grade;
+                option.textContent = grade;
+                gradeSelect.appendChild(option);
+            });
+        }
+
+        // Initialize grade options if level is pre-selected
+        document.addEventListener('DOMContentLoaded', function () {
+            const level = document.querySelector('[asp-for="Student.GradeLevel"]').value;
+            if (level) updateGradeOptions(level);
+        });</script>
+}

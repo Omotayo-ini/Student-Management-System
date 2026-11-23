@@ -1,0 +1,231 @@
+@page "{studentId?}"
+@model StudentManagement.Pages.Payments.RecordModel
+@using Google.Cloud.Firestore
+@{
+    ViewData["Title"] = "Record Payment";
+}
+
+<div class="container-fluid py-4">
+    <div class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a asp-page="/StudentRecords/Index" class="text-decoration-none text-muted">Students</a></li>
+                <li class="breadcrumb-item active">Record Payment</li>
+            </ol>
+        </nav>
+        <h4 class="fw-bold">Record Payment</h4>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate id="paymentForm">
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Student <span class="text-danger">*</span></label>
+                                <input id="studentSearch" name="studentSearch" class="form-control" 
+                                       placeholder="Search student by name or ID" autocomplete="off" 
+                                       value="@(Model.SelectedStudent != null ? $"{Model.SelectedStudent.FullName} ({Model.SelectedStudent.StudentId})" : "")" />
+                                <div id="studentSuggestions" class="list-group position-absolute" 
+                                     style="z-index:1000; max-height:200px; overflow:auto; display:none;"></div>
+                                <!-- CRITICAL FIX: Added explicit name attribute that matches what the handler expects -->
+                                <input type="hidden" name="PaymentInput.StudentFeeId" id="StudentFeeId" 
+                                       value="@Model.PaymentInput.StudentFeeId" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Academic Year</label>
+                                <select asp-for="PaymentInput.AcademicYear" class="form-select" required>
+                                    <option value="@DateTime.Now.Year">@DateTime.Now.Year</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Term</label>
+                                <input class="form-control" value="@Model.CurrentTerm" readonly />
+                                <input type="hidden" asp-for="PaymentInput.Term" value="@Model.CurrentTerm" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Amount <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input asp-for="PaymentInput.Amount" type="number" step="0.01" class="form-control" required />
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" asp-for="PaymentInput.Method" value="Cash" />
+                        <input type="hidden" asp-for="PaymentInput.ReferenceNumber" value="" />
+
+                        <div class="mb-3">
+                            <label class="form-label">Date</label>
+                            <input asp-for="PaymentInput.Date" type="date" class="form-control"
+                                   value="@DateTime.Now.ToString("yyyy-MM-dd")" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Notes</label>
+                            <textarea asp-for="PaymentInput.Notes" class="form-control" rows="2"></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a asp-page="/StudentRecords/Index" class="btn btn-outline-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="bi bi-check-circle me-2"></i>Record Payment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            @if (Model.SelectedStudent != null)
+            {
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white">
+                        <h6 class="fw-bold mb-0">Student Info</h6>
+                    </div>
+                    <div class="card-body">
+                        <h5>@Model.SelectedStudent.FullName</h5>
+                        <p class="text-muted mb-1">@Model.SelectedStudent.Grade</p>
+                        <p class="text-muted">ID: @Model.SelectedStudent.StudentId</p>
+                        <hr />
+                        <div class="d-flex justify-content-between">
+                            <span>Current Balance:</span>
+                            <span class="fw-bold text-danger">@Model.CurrentBalance.ToString("C")</span>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="fw-bold mb-0">Recent Payments</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.RecentPayments.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var payment in Model.RecentPayments.Take(5))
+                            {
+                                <div class="list-group-item px-0">
+                                    <div class="d-flex justify-content-between">
+                                        <span class="fw-bold">@(((double)payment["amount"]).ToString("C"))</span>
+                                        <small class="text-muted">@(((Timestamp)payment["date"]).ToDateTime().ToString("MMM dd"))</small>
+                                    </div>
+                                    <small class="text-muted">@payment["method"]</small>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center mb-0">No recent payments</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const input = document.getElementById('studentSearch');
+            const hidden = document.getElementById('StudentFeeId');
+            const suggestions = document.getElementById('studentSuggestions');
+            const form = document.getElementById('paymentForm');
+            let debounce;
+
+            // CRITICAL FIX: Don't clear hidden on every input - only clear if user is actually typing new search
+            let lastSelectedId = hidden.value;
+
+            input.addEventListener('input', function () {
+                const q = this.value.trim();
+
+                // Only clear if the text doesn't match the last selected student's display name
+                // This prevents clearing when the field is pre-populated from model
+                if (lastSelectedId && this.dataset.selectedDisplay) {
+                    if (!this.value.includes(this.dataset.selectedDisplay)) {
+                        hidden.value = '';
+                        lastSelectedId = '';
+                        delete this.dataset.selectedDisplay;
+                    }
+                } else if (!this.dataset.selectedDisplay) {
+                    hidden.value = '';
+                }
+
+                if (debounce) clearTimeout(debounce);
+
+                // Don't search for empty strings
+                if (q.length < 1) {
+                    suggestions.style.display = 'none';
+                    return;
+                }
+
+                debounce = setTimeout(async () => {
+                    try {
+                        const resp = await fetch(`?handler=Search&q=${encodeURIComponent(q)}`);
+                        if (!resp.ok) return;
+                        const items = await resp.json();
+                        suggestions.innerHTML = '';
+                        if (!items || items.length === 0) { 
+                            suggestions.style.display = 'none'; 
+                            return; 
+                        }
+
+                        items.forEach(it => {
+                            const el = document.createElement('button');
+                            el.type = 'button';
+                            el.className = 'list-group-item list-group-item-action';
+                            el.textContent = it.display;
+                            el.dataset.id = it.id;
+
+                            // CRITICAL FIX: Use mousedown instead of click to beat the blur event
+                            el.addEventListener('mousedown', function (e) {
+                                e.preventDefault(); // Prevent blur from firing
+                                input.value = this.textContent;
+                                hidden.value = this.dataset.id;
+                                lastSelectedId = this.dataset.id;
+                                input.dataset.selectedDisplay = this.textContent;
+                                input.dataset.selectedId = this.dataset.id;
+                                suggestions.style.display = 'none';
+                            });
+
+                            suggestions.appendChild(el);
+                        });
+                        suggestions.style.display = 'block';
+                    } catch (e) {
+                        console.warn('Search error', e);
+                    }
+                }, 150);
+            });
+
+            // CRITICAL FIX: Form validation before submit
+            form.addEventListener('submit', function(e) {
+                if (!hidden.value || hidden.value === '') {
+                    e.preventDefault();
+                    alert('Please select a student from the dropdown suggestions.');
+                    input.focus();
+                    return false;
+                }
+                console.log('Submitting with StudentFeeId:', hidden.value);
+            });
+
+            // Hide suggestions on blur (with delay to allow mousedown to fire first)
+            input.addEventListener('blur', function () { 
+                setTimeout(() => { suggestions.style.display = 'none'; }, 250); 
+            });
+
+            // Pre-populate if we have a selected student from model
+            if (hidden.value && input.value) {
+                lastSelectedId = hidden.value;
+                input.dataset.selectedDisplay = input.value;
+            }
+        });
+    </script>
+}

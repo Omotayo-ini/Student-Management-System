@@ -1,0 +1,539 @@
+@page
+@model StudentManagement.Pages.Analytics.IndexModel
+@{
+    ViewData["Title"] = "Analytics & Reports";
+}
+
+<div class="container-fluid py-4" id="analytics-dashboard">
+    <style>
+        /* PDF-friendly styles */
+        #analytics-dashboard { background: #fff; }
+        .page-section { page-break-inside: avoid; -webkit-page-break-inside: avoid; break-inside: avoid; }
+        .page-break { display:block; height:1px; page-break-after:always; -webkit-page-break-after:always; }
+        /* Ensure canvases render at a printable size */
+        #analytics-dashboard canvas { max-width: 100%; height: auto !important; }
+        /* Slightly reduce chart sizes for PDF layout */
+        @@media print {
+            #analytics-dashboard .card { box-shadow: none; }
+            #analytics-dashboard .card-body { padding: 0.75rem; }
+        }
+    </style>
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold">Analytics & Reports</h4>
+            <p class="text-muted">Academic Year @Model.CurrentAcademicYear — @Model.CurrentTerm</p>
+        </div>
+        <button class="btn btn-primary" onclick="exportToPDF()">
+            <i class="bi bi-file-earmark-pdf me-2"></i>Export as PDF
+        </button>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="page-section">
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="mb-1">Total Revenue</h6>
+                            <h3 class="mb-0">@Model.TotalCollected.ToString("C")</h3>
+                        </div>
+                        <i class="bi bi-cash-stack fs-1 opacity-50"></i>
+                    </div>
+                    <small>@Model.CollectionRate.ToString("F1")% collection rate</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-warning text-dark">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="mb-1">Outstanding</h6>
+                            <h3 class="mb-0">@Model.TotalOutstanding.ToString("C")</h3>
+                        </div>
+                        <i class="bi bi-exclamation-triangle fs-1 opacity-50"></i>
+                    </div>
+                    <small>@Model.OverdueStudents.Count students overdue</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="mb-1">Active Students</h6>
+                            <h3 class="mb-0">@Model.TotalActiveStudents</h3>
+                        </div>
+                        <i class="bi bi-people fs-1 opacity-50"></i>
+                    </div>
+                    <small>@Model.NewAdmissionsThisYear new this year</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="mb-1">At-Risk Students</h6>
+                            <h3 class="mb-0">@Model.AtRiskStudents.Count</h3>
+                        </div>
+                        <i class="bi bi-shield-exclamation fs-1 opacity-50"></i>
+                    </div>
+                    <small>High balance + no payment</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <div class="page-break"></div>
+
+    <!-- Charts Row 1 -->
+    <div class="page-section">
+    <div class="row g-4 mb-4">
+        <!-- Fee Collection by Grade -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="fw-bold mb-0">Fee Collection by Grade</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="collectionByGradeChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <!-- Payment Status Distribution -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="fw-bold mb-0">Payment Status Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="paymentStatusChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="page-section">
+    <div class="row g-4 mb-4">
+        <!-- Revenue Trend -->
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="fw-bold mb-0">Revenue Trend (Monthly)</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueTrendChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <!-- Age Distribution -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="fw-bold mb-0">Age Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="ageDistributionChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <div class="page-break"></div>
+
+    <!-- Charts Row 3 -->
+    <div class="page-section">
+    <div class="row g-4 mb-4">
+        <!-- Enrollment by Grade -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="fw-bold mb-0">Enrollment by Grade</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="enrollmentByGradeChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <!-- Year-over-Year Growth -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="fw-bold mb-0">Year-over-Year Growth</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="yoyGrowthChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <div class="page-break"></div>
+
+    <!-- Tables Row -->
+    <div class="page-section">
+    <div class="row g-4 mb-4">
+        <!-- Outstanding Students -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between">
+                    <h6 class="fw-bold mb-0">Top Outstanding Balances</h6>
+                    <span class="badge bg-danger">@Model.OverdueStudents.Count total</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Grade</th>
+                                    <th>Balance</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var student in Model.OverdueStudents.Take(10))
+                                {
+                                    <tr>
+                                        <td>@student.FullName</td>
+                                        <td>@student.Grade</td>
+                                        <td class="text-danger fw-bold">@student.CurrentBalance.ToString("C")</td>
+                                        <td>
+                                            <span class="badge @(student.PaymentStatus == "Paid" ? "bg-success" : student.PaymentStatus == "Partial" ? "bg-warning" : "bg-danger")">
+                                                @student.PaymentStatus
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- At-Risk Students -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white d-flex justify-content-between">
+                    <h6 class="fw-bold mb-0">At-Risk Students</h6>
+                    <span class="badge bg-warning">@Model.AtRiskStudents.Count flagged</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Grade</th>
+                                    <th>Balance</th>
+                                    <th>Risk</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var student in Model.AtRiskStudents.Take(10))
+                                {
+                                    <tr>
+                                        <td>@student.FullName</td>
+                                        <td>@student.Grade</td>
+                                        <td class="text-danger">@student.CurrentBalance.ToString("C")</td>
+                                        <td>
+                                            <span class="badge @(student.RiskLevel == "High" ? "bg-danger" : student.RiskLevel == "Medium" ? "bg-warning" : "bg-success")">
+                                                @student.RiskLevel (@student.RiskScore.ToString("F0"))
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <div class="page-break"></div>
+
+    <!-- Aging Report & Operational KPIs -->
+    <div class="page-section">
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="fw-bold mb-0">Aging Report</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="agingChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="fw-bold mb-0">Operational KPIs</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted">Avg Balance/Student</small>
+                                <h5 class="mb-0">@Model.AverageBalancePerStudent.ToString("C")</h5>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted">Avg Payment/Student</small>
+                                <h5 class="mb-0">@Model.AveragePaymentPerStudent.ToString("C")</h5>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 bg-success bg-opacity-10 rounded text-center">
+                                <h5 class="mb-0 text-success">@Model.StudentsWithFullPayment</h5>
+                                <small class="text-muted">Fully Paid</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 bg-warning bg-opacity-10 rounded text-center">
+                                <h5 class="mb-0 text-warning">@Model.StudentsWithPartialPayment</h5>
+                                <small class="text-muted">Partial</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 bg-danger bg-opacity-10 rounded text-center">
+                                <h5 class="mb-0 text-danger">@Model.StudentsWithNoPayment</h5>
+                                <small class="text-muted">Unpaid</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        // Chart.js defaults
+        Chart.defaults.font.family = "'Segoe UI', 'Helvetica Neue', sans-serif";
+        Chart.defaults.color = '#6c757d';
+
+        // Fee Collection by Grade (Bar Chart)
+        const collectionCtx = document.getElementById('collectionByGradeChart').getContext('2d');
+        new Chart(collectionCtx, {
+            type: 'bar',
+            data: {
+                labels: @Json.Serialize(Model.CollectionByGrade.Select(g => g.Grade)),
+                datasets: [
+                    {
+                        label: 'Collected',
+                        data: @Json.Serialize(Model.CollectionByGrade.Select(g => g.Collected)),
+                        backgroundColor: '#198754',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Outstanding',
+                        data: @Json.Serialize(Model.CollectionByGrade.Select(g => g.Outstanding)),
+                        backgroundColor: '#dc3545',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true, ticks: { callback: v => 'R ' + v.toLocaleString() } }
+                }
+            }
+        });
+
+        // Payment Status (Pie Chart)
+        const paymentCtx = document.getElementById('paymentStatusChart').getContext('2d');
+        new Chart(paymentCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Fully Paid', 'Partial', 'Unpaid'],
+                datasets: [{
+                    data: [@Model.StudentsWithFullPayment, @Model.StudentsWithPartialPayment, @Model.StudentsWithNoPayment],
+                    backgroundColor: ['#198754', '#ffc107', '#dc3545'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+
+        // Revenue Trend (Line Chart)
+        const revenueCtx = document.getElementById('revenueTrendChart').getContext('2d');
+        new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: @Json.Serialize(Model.MonthlyRevenue.Select(r => r.Month)),
+                datasets: [{
+                    label: 'Revenue',
+                    data: @Json.Serialize(Model.MonthlyRevenue.Select(r => r.Revenue)),
+                    borderColor: '#0d6efd',
+                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true, ticks: { callback: v => 'R ' + v.toLocaleString() } }
+                }
+            }
+        });
+
+        // Age Distribution (Bar Chart)
+        const ageCtx = document.getElementById('ageDistributionChart').getContext('2d');
+        new Chart(ageCtx, {
+            type: 'bar',
+            data: {
+                labels: @Json.Serialize(Model.AgeDistribution.Select(a => a.Age + " yrs")),
+                datasets: [{
+                    label: 'Students',
+                    data: @Json.Serialize(Model.AgeDistribution.Select(a => a.Count)),
+                    backgroundColor: '#6f42c1',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        // Enrollment by Grade (Horizontal Bar)
+        const enrollmentCtx = document.getElementById('enrollmentByGradeChart').getContext('2d');
+        new Chart(enrollmentCtx, {
+            type: 'bar',
+            data: {
+                labels: @Json.Serialize(Model.EnrollmentByGrade.Select(e => e.Grade)),
+                datasets: [
+                    {
+                        label: 'Active',
+                        data: @Json.Serialize(Model.EnrollmentByGrade.Select(e => e.ActiveCount)),
+                        backgroundColor: '#198754',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Inactive',
+                        data: @Json.Serialize(Model.EnrollmentByGrade.Select(e => e.InactiveCount)),
+                        backgroundColor: '#6c757d',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                scales: { x: { stacked: true }, y: { stacked: true } }
+            }
+        });
+
+        // Year-over-Year Growth (Line + Bar)
+        const yoyCtx = document.getElementById('yoyGrowthChart').getContext('2d');
+        new Chart(yoyCtx, {
+            type: 'bar',
+            data: {
+                labels: @Json.Serialize(Model.YearOverYearComparison.Select(y => y.Year)),
+                datasets: [
+                    {
+                        label: 'Revenue',
+                        data: @Json.Serialize(Model.YearOverYearComparison.Select(y => y.TotalRevenue)),
+                        backgroundColor: '#0d6efd',
+                        borderRadius: 4,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Growth %',
+                        data: @Json.Serialize(Model.YearOverYearComparison.Select(y => y.GrowthRate)),
+                        type: 'line',
+                        borderColor: '#ffc107',
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true, position: 'left', ticks: { callback: v => 'R ' + v.toLocaleString() } },
+                    y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: v => v + '%' } }
+                }
+            }
+        });
+
+        // Aging Report (Pie)
+        const agingCtx = document.getElementById('agingChart').getContext('2d');
+        new Chart(agingCtx, {
+            type: 'pie',
+            data: {
+                labels: @Json.Serialize(Model.AgingBuckets.Keys),
+                datasets: [{
+                    data: @Json.Serialize(Model.AgingBuckets.Values),
+                    backgroundColor: ['#198754', '#ffc107', '#dc3545'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+
+        // PDF Export
+        function exportToPDF() {
+            const element = document.getElementById('analytics-dashboard');
+            const opt = {
+                margin: 0.5,
+                filename: "@($"Oakdale-Analytics-Report-{Model.CurrentAcademicYear}.pdf")",
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: true },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+            };
+
+            // Show loading
+            const btn = document.querySelector('button[onclick="exportToPDF()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Generating...';
+            btn.disabled = true;
+
+            // Use html2canvas to capture high-resolution images of each chart area and then build PDF pages manually
+            const sections = Array.from(element.querySelectorAll('.page-section'));
+            // If sections exist, render each to a PDF page
+            if (sections.length > 0) {
+                const { jsPDF } = window.jspdf || {};
+            }
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }).catch(err => {
+                console.error('PDF export failed:', err);
+                alert('PDF export failed. Please try again.');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        }
+
+        if (new URLSearchParams(window.location.search).get('voiceExport') === '1') {
+            window.setTimeout(() => exportToPDF(), 500);
+        }
+    </script>
+}
