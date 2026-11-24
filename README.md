@@ -184,6 +184,35 @@ Introduce voice-assisted interaction into routine administrative workflows.
 
 Make school analytics easier to access through automated PDF reporting.
 
+Application Screenshots
+
+1. Dashboard
+
+The main dashboard provides an overview of the application's student management functionality.
+
+
+
+2. Student Records
+
+The student records interface supports the management and organisation of student information.
+
+
+
+3. Automated Processes
+
+The application incorporates automated workflows for student administration and academic progression.
+
+
+
+4. Data Import and Class Placement
+
+The data import interface supports the extraction, processing, and organisation of student records from class lists.
+
+
+
+5. Analytics and Voice Assistant
+
+The analytics and voice assistant functionality provides voice-activated interactions and reporting capabilities, including PDF exports.
 Author
 
 Inioluwa Omotayo
